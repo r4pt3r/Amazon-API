@@ -1,7 +1,11 @@
 import requests
 import json
+import re
 from dotenv import load_dotenv
 import os
+from fastapi import FastAPI, Query
+
+app = FastAPI()
 
 load_dotenv()
 
@@ -11,7 +15,7 @@ CHAT_ID = os.getenv('CHAT_ID')
 
 # get ranks from the API
 def api_rank(asin):
-    api = f'http://localhost:8000/rank/{asin}'
+    api = f'http://localhost:8000/rank?asin={asin}'
     res = requests.get(api)
     data = json.loads(res.text)
 
@@ -22,7 +26,8 @@ def api_rank(asin):
     return f'ASIN: {asin_p} \n{cat_rank} \n{subcat_rank}'
 
 # send message to telegram group
-def send_msg(API_TOKEN, CHAT_ID, asin):
+#def send_msg(API_TOKEN, CHAT_ID, asin):
+def send_msg(asin):
     url = f'https://api.telegram.org/bot{API_TOKEN}/sendMessage'
 
     payload = {
@@ -31,10 +36,21 @@ def send_msg(API_TOKEN, CHAT_ID, asin):
     }
 
     response = requests.post(url, data=payload)
-    print(response.json())
+    return(response.json())
+
+# listenting for api
+@app.get("/asin")
+async def get_asin(
+    asin: str = Query(..., description="Amazon Standard Identification Number (ASIN)")
+    ):
+    # Extract ASIN from URL
+    asin_match = re.search(r'dp/([A-Z0-9]+)', asin)
+    if asin_match:
+        asin = asin_match.group(1)
+    #calling the send function
+    return send_msg(asin)
 
 # main function where asin is passed
 if __name__ == "__main__":
-    send_msg(API_TOKEN, CHAT_ID,'B0CH1DMVBQ')
-    send_msg(API_TOKEN, CHAT_ID,'B0B2F85CC4')
-    send_msg(API_TOKEN, CHAT_ID,'B09WPVVXN2')
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=9000)
