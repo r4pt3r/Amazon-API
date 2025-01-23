@@ -9,7 +9,7 @@ API_TOKEN = os.getenv('API_TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
 #MESSAGE = 'Hello, Group! This is a test message from my bot.'
 
-
+# get ranks from the API
 def get_rank(asin):
     api = f'http://localhost:8000/rank/{asin}'
     res = requests.get(api)
@@ -21,7 +21,7 @@ def get_rank(asin):
     
     return f'ASIN: {asin_p} \n{cat_rank} \n{subcat_rank}'
 
-
+# send message to telegram group
 def send_msg(API_TOKEN, CHAT_ID, asin):
     url = f'https://api.telegram.org/bot{API_TOKEN}/sendMessage'
 
@@ -33,5 +33,6 @@ def send_msg(API_TOKEN, CHAT_ID, asin):
     response = requests.post(url, data=payload)
     print(response.json())
 
+# main function where asin is passed
 if __name__ == "__main__":
     send_msg(API_TOKEN, CHAT_ID,'B0CH1DMVBQ')
