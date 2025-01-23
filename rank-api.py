@@ -24,7 +24,8 @@ def get_rank(asin):
         span_comp = table.find_all("span")
 
         # seperate the rankings
-        cat_rank = span_comp[1].text
+        cat_rank = span_comp[1].text.replace("(See Top 100 in Home & Kitchen)", "").strip()
+        #cat_rank = re.sub(r"\(.*?\)", "", span_comp[1]).strip()
         subcat_rank = span_comp[2].text
 
         # return the data
