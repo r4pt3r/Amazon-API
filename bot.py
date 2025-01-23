@@ -10,7 +10,7 @@ CHAT_ID = os.getenv('CHAT_ID')
 #MESSAGE = 'Hello, Group! This is a test message from my bot.'
 
 # get ranks from the API
-def get_rank(asin):
+def api_rank(asin):
     api = f'http://localhost:8000/rank/{asin}'
     res = requests.get(api)
     data = json.loads(res.text)
@@ -27,7 +27,7 @@ def send_msg(API_TOKEN, CHAT_ID, asin):
 
     payload = {
         'chat_id': CHAT_ID,
-        'text': get_rank(asin)
+        'text': api_rank(asin)
     }
 
     response = requests.post(url, data=payload)
@@ -36,3 +36,5 @@ def send_msg(API_TOKEN, CHAT_ID, asin):
 # main function where asin is passed
 if __name__ == "__main__":
     send_msg(API_TOKEN, CHAT_ID,'B0CH1DMVBQ')
+    send_msg(API_TOKEN, CHAT_ID,'B0B2F85CC4')
+    send_msg(API_TOKEN, CHAT_ID,'B09WPVVXN2')
