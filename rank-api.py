@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -42,8 +42,10 @@ def get_rank(asin):
         raise HTTPException(status_code=400, detail=f"Data extraction error: {ve}")
 
 # listenting for api
-@app.get("/rank/{asin}")
-async def get_asin(asin: str):
+@app.get("/rank")
+async def get_asin(
+    asin: str = Query(..., description="Amazon Standard Identification Number (ASIN)")
+    ):
     # Extract ASIN from URL
     asin_match = re.search(r'dp/([A-Z0-9]+)', asin)
     if asin_match:
