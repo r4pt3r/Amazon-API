@@ -16,25 +16,46 @@ DATABASE = os.getenv('DATABASE')
 USER = os.getenv('USER')
 PASSWORD = os.getenv('PASSWORD')
 
-# get ranks from the API
-def api_rank(asin):
+def compare_ranks(asin, cat_rank, subcat_rank, cat_rank_int, subcat_rank_int): # get last record from db and compare
+    connection, cursor = db_conn()
+
+    get_last_record_query = f"""
+    SELECT time, cat_rank, subcat_rank from {asin} 
+    ORDER BY time DESC LIMIT 1;
+    """
+
+    cursor.execute(get_last_record_query)
+
+    results = cursor.fetchone() 
+    print(results[1])
+
+    if results[1]==str(cat_rank_int):
+        return f'ASIN: {asin} ✅\n{cat_rank} \n{subcat_rank}'
+    elif results[1]<str(cat_rank_int):
+        return f'ASIN: {asin} 🔼\n{cat_rank} \n{subcat_rank}'
+    else:
+        return f'ASIN: {asin} 🔽\n{cat_rank} \n{subcat_rank}'
+
+def api_rank(asin): # get ranks from the API
     api = f'http://localhost:8000/rank?asin={asin}'
     res = requests.get(api)
     data = json.loads(res.text)
 
     asin_p = data["asin"]
-    cat_rank = data["category_rank"]
-    subcat_rank = data["sub_category_rank"]
+    cat_rank = data["category_rank"] # with category names
+    subcat_rank = data["sub_category_rank"] # with category names
 
     cat_rank_int = re.search(r'\d{1,3}(,\d{3})*',cat_rank).group() # extracting numbers alone
     subcat_rank_int = re.search(r'\d{1,3}(,\d{3})*',subcat_rank).group() # extracting numbers alone
 
     insert_table(asin, cat_rank_int , subcat_rank_int) #insert to db after removing un-wanted texts
     
-    return f'ASIN: {asin_p} \n{cat_rank} \n{subcat_rank}'
+    #message = f'ASIN: {asin_p} \n{cat_rank} \n{subcat_rank}'
+    message = compare_ranks(asin, cat_rank, subcat_rank, cat_rank_int, subcat_rank_int)
+    #send_msg(message)
+    return message
 
-# send message to telegram group
-def send_msg(asin):
+def send_msg(asin): # send message to telegram group
     url = f'https://api.telegram.org/bot{API_TOKEN}/sendMessage'
 
     payload = {
