@@ -55,10 +55,7 @@ def get_rank(asin): # get ranks from the API
     cat_rank_int = re.search(r'\d{1,3}(,\d{3})*',cat_rank).group() # extracting numbers alone
     subcat_rank_int = re.search(r'\d{1,3}(,\d{3})*',subcat_rank).group() # extracting numbers alone
     
-    #message = f'ASIN: {asin_p} \n{cat_rank} \n{subcat_rank}'
-    print(f'compare_ranks({asin}, {cat_rank}, {subcat_rank}, {cat_rank_int}, {subcat_rank_int})')
     message = compare_ranks(asin, cat_rank, subcat_rank, cat_rank_int, subcat_rank_int)
-    #send_msg(message)
 
     insert_table(asin, cat_rank_int , subcat_rank_int) #insert to db after removing un-wanted texts
     return message
@@ -116,7 +113,6 @@ def insert_table(asin, cat_rank, subcat_rank): # Insert into db
 
     # Get the current date and time
     dtime = datetime.now()
-    #datetime = "2025-01-24 00:25:52.561803"
 
     # Print the current date and time
     print("Current Date and Time:", datetime)
