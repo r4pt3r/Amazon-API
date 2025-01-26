@@ -77,7 +77,7 @@ def db_conn(): # Establish db connection
             password=PASSWORD
         )
         if connection.is_connected():
-            print("Successfully connected to the database!")
+            print("DB Connected!!")
 
             # Create a cursor object
             cursor = connection.cursor()
@@ -89,7 +89,7 @@ def db_close(): # Close db connection
     if connection.is_connected():
         cursor.close()
         connection.close()
-        print("Database connection closed.")
+        print("DB Closed!!")
     
 def create_table_asin(asin): # Create a table    
     create_table_query = f"""
@@ -100,7 +100,7 @@ def create_table_asin(asin): # Create a table
         ); """
     
     cursor.execute(create_table_query)
-    print("Table created successfully!")
+    print(f"Ran create table if not exist for {asin}")
     send_msg(asin)
 
 def insert_table(asin, cat_rank, subcat_rank): # Insert into db
@@ -114,14 +114,13 @@ def insert_table(asin, cat_rank, subcat_rank): # Insert into db
     
     cursor.execute(insert_query)
     connection.commit()
-    print("Data inserted successfully!")        
+    print(f"Rank updated to DB for {asin}")        
 
 def track_asin():
     select_query = f""" SELECT asin, sku, chat_id FROM track"""
     cursor.execute(select_query)
     results = cursor.fetchall()
-
-    print(results)
+    print("Tracked ASINs\n",results)
 
     for row in results:
         asin = row[0]
@@ -130,9 +129,8 @@ def track_asin():
 
         create_table_asin(asin)
 
-connection, cursor = db_conn()
+connection, cursor = db_conn() # created global connection 
         
-# main function where asin is passed
 if __name__ == "__main__":
     track_asin()
     db_close()
