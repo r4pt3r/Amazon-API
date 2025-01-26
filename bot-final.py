@@ -4,7 +4,6 @@ from mysql.connector import Error
 from datetime import datetime
 from bs4 import BeautifulSoup
 
-
 load_dotenv() #Load credentials
 
 API_TOKEN = os.getenv('API_TOKEN')
@@ -17,24 +16,33 @@ USER = os.getenv('USER')
 PASSWORD = os.getenv('PASSWORD')
 
 def compare_ranks(asin, cat_rank, subcat_rank, cat_rank_int, subcat_rank_int): # get last record from db and compare
+    try:
+        last_rank = f"""
+            SELECT time, cat_rank, subcat_rank from {asin} 
+            ORDER BY time DESC LIMIT 1; """
+        cursor.execute(last_rank)
+        results = cursor.fetchone() 
 
-    get_last_record_query = f"""
-        SELECT time, cat_rank, subcat_rank from {asin} 
-        ORDER BY time DESC LIMIT 1; """
-    cursor.execute(get_last_record_query)
-
-    results = cursor.fetchone() 
-        
-    if results[1]==str(cat_rank_int):
-        return f'ASIN: {asin} ✅\n{cat_rank} \n{subcat_rank}'
-    elif results[1]<str(cat_rank_int):
-        return f'ASIN: {asin} 🔼\n{cat_rank} \n{subcat_rank}'
-    else:
-        return f'ASIN: {asin} 🔽\n{cat_rank} \n{subcat_rank}'
+        find_sku = f"SELECT sku from track WHERE asin='{asin}'"
+        cursor.execute(find_sku)
+        sku = cursor.fetchone()[0]
+            
+        if results[1]==str(cat_rank_int):
+            return f'ASIN: {asin} 🟰\nSKU: {sku} \n{cat_rank} \n{subcat_rank}'
+        elif results[1]<str(cat_rank_int):
+            return f'ASIN: {asin} 🔻\nSKU: {sku} \n{cat_rank} \n{subcat_rank}'
+        else:
+            return f'ASIN: {asin} 🚀\nSKU: {sku} \n{cat_rank} \n{subcat_rank}'
+    except:
+        find_sku = f"SELECT sku from track WHERE asin='{asin}'"
+        cursor.execute(find_sku)
+        sku = cursor.fetchone()[0]
+        return f'ASIN: {asin} 🟰\nSKU: {sku} \n{cat_rank} \n{subcat_rank}'
 
 def get_rank(asin): # get ranks from the API
     url = f'https://www.amazon.in/dp/{asin}'
-    headers = {'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246"}
+    headers = {'User-Agent': 
+               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246"}
 
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.content, 'html.parser')
@@ -45,8 +53,7 @@ def get_rank(asin): # get ranks from the API
     
     span_comp = table.find_all("span") # filtered span with rank data
 
-    cat_rank = span_comp[1].text.replace("(See Top 100 in Home & Kitchen)", "").strip() # seperate the rankings
-    #cat_rank = re.sub(r"\(.*?\)", "", span_comp[1]).strip()
+    cat_rank = re.sub(r"\(.*?\)", "", span_comp[1].text).strip()
     subcat_rank = span_comp[2].text
 
     cat_rank_int = re.search(r'\d{1,3}(,\d{3})*',cat_rank).group() # extracting numbers alone
