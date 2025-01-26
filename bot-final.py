@@ -1,6 +1,5 @@
 import requests, json, re, os, mysql.connector
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query
 from mysql.connector import Error
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -18,12 +17,10 @@ USER = os.getenv('USER')
 PASSWORD = os.getenv('PASSWORD')
 
 def compare_ranks(asin, cat_rank, subcat_rank, cat_rank_int, subcat_rank_int): # get last record from db and compare
-    connection, cursor = db_conn()
 
     get_last_record_query = f"""
-    SELECT time, cat_rank, subcat_rank from {asin} 
-    ORDER BY time DESC LIMIT 1;
-    """
+        SELECT time, cat_rank, subcat_rank from {asin} 
+        ORDER BY time DESC LIMIT 1; """
     cursor.execute(get_last_record_query)
 
     results = cursor.fetchone() 
@@ -88,53 +85,39 @@ def db_conn(): # Establish db connection
     except Error as e:
         return(f"Error: {e}")
 
-def db_close(connection, cursor): # Close db connection
+def db_close(): # Close db connection
     if connection.is_connected():
         cursor.close()
         connection.close()
         print("Database connection closed.")
     
-def create_table_asin(asin): # Create a table
-    connection, cursor = db_conn()
-    
+def create_table_asin(asin): # Create a table    
     create_table_query = f"""
-    CREATE TABLE IF NOT EXISTS {asin} (
-        time DATETIME,
-        cat_rank VARCHAR(10),
-        subcat_rank VARCHAR(10)
-    );
-    """
+        CREATE TABLE IF NOT EXISTS {asin} (
+            time DATETIME,
+            cat_rank VARCHAR(10),
+            subcat_rank VARCHAR(10)
+        ); """
+    
     cursor.execute(create_table_query)
     print("Table created successfully!")
     send_msg(asin)
 
 def insert_table(asin, cat_rank, subcat_rank): # Insert into db
-    connection, cursor = db_conn()
-
-    # Get the current date and time
     dtime = datetime.now()
-
-    # Print the current date and time
-    print("Current Date and Time:", datetime)
-
-    # Create a table
+    
     insert_query = f"""
-    INSERT INTO {asin} VALUES ('{dtime}', 
-        '{cat_rank}', 
-        '{subcat_rank}'
-    );
-    """
-    print(insert_query)
+        INSERT INTO {asin} VALUES ('{dtime}', 
+            '{cat_rank}', 
+            '{subcat_rank}'
+        ); """
+    
     cursor.execute(insert_query)
     connection.commit()
     print("Data inserted successfully!")        
 
-def track_asin(table_name):
-    connection, cursor = db_conn()
-
-    select_query = f"""
-    SELECT asin, sku, chat_id FROM {table_name}
-    """
+def track_asin():
+    select_query = f""" SELECT asin, sku, chat_id FROM track"""
     cursor.execute(select_query)
     results = cursor.fetchall()
 
@@ -146,9 +129,11 @@ def track_asin(table_name):
         chat_id = row[2]
 
         create_table_asin(asin)
+
+connection, cursor = db_conn()
         
 # main function where asin is passed
 if __name__ == "__main__":
-    connection, cursor = db_conn()
-    track_asin('track')
-    db_close(connection, cursor)
+    track_asin()
+    db_close()
+
